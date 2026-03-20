@@ -15,14 +15,22 @@ from pathlib import Path
 logger = logging.getLogger(__name__)
 
 REQUIRED_COLUMNS = {
-    "Order ID", "Date", "Category", "Product Name",
-    "Quantity", "Unit Price", "Total Price", "Region", "Payment Method",
+    "Transaction ID", "Date", "Product Category", "Product Name",
+    "Units Sold", "Unit Price", "Total Revenue", "Region", "Payment Method",
+}
+
+# Mapping from CSV column names → internal canonical names used in metrics.py
+COLUMN_ALIASES = {
+    "Transaction ID":   "Order ID",
+    "Product Category": "Category",
+    "Units Sold":       "Quantity",
+    "Total Revenue":    "Total Price",
 }
 
 
 def load_csv(source: str) -> dict:
     """
-    Parse a CSV file.
+    Parse a CSV file and normalise column names to canonical internal names.
 
     Returns a dict with keys:
       rows, row_count, col_count, columns, date_range
@@ -66,20 +74,22 @@ def load_csv(source: str) -> dict:
 
 
 def _cast_row(row: dict) -> dict:
-    """Cast numeric columns from str to float/int."""
+    """Normalise column names and cast numeric columns from str to float/int."""
     out = {}
     for k, v in row.items():
+        canonical = COLUMN_ALIASES.get(k, k)
         v = v.strip() if isinstance(v, str) else v
-        if k in ("Quantity",):
+
+        if canonical == "Quantity":
             try:
-                out[k] = int(float(v))
+                out[canonical] = int(float(v))
             except (ValueError, TypeError):
-                out[k] = None
-        elif k in ("Unit Price", "Total Price"):
+                out[canonical] = None
+        elif canonical in ("Unit Price", "Total Price"):
             try:
-                out[k] = float(v)
+                out[canonical] = float(v)
             except (ValueError, TypeError):
-                out[k] = None
+                out[canonical] = None
         else:
-            out[k] = v if v != "" else None
+            out[canonical] = v if v != "" else None
     return out
