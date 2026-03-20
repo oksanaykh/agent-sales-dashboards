@@ -1,0 +1,24 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "agent-sales-dashboard"
+version = "0.1.0"
+description = "LangGraph agent that builds sales dashboards for 3 audiences from a CSV"
+requires-python = ">=3.11"
+
+dependencies = [
+    "langgraph>=0.2",
+    "langchain-core>=0.2",
+]
+
+[project.optional-dependencies]
+anthropic = ["anthropic>=0.25"]
+dev = ["pytest>=8", "pytest-cov"]
+
+[project.scripts]
+sales-dashboard = "main:main"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
