@@ -16,9 +16,9 @@ Reads any CSV with sales data → computes metrics for three audiences → write
 
 | Audience | Dashboard focus |
 |---|---|
-| **Топ-менеджмент** | Revenue, AOV, category mix, seasonality index |
-| **Продуктовая команда** | Top products, SKU analysis, category × region heatmap |
-| **Маркетинг / Growth** | Payment methods, regional trends, weekday patterns |
+| **Executive** | Revenue, AOV, category mix, seasonality index |
+| **Product Team** | Top products, SKU analysis, category × region heatmap |
+| **Marketing / Growth** | Payment methods, regional trends, weekday patterns |
 
 All three dashboards are combined into **one self-contained HTML file** with a tab switcher.
 Open it in any browser — no server, no dependencies.
@@ -37,29 +37,29 @@ after `loader` to short-circuit on file errors without crashing.
 ```
 agent-sales-dashboard/
 ├── agents/
-│   ├── graph.py          # LangGraph StateGraph — nodes + conditional edges
-│   └── state.py          # AgentState TypedDict — single source of truth
+│   ├── graph.py              # LangGraph StateGraph — nodes + conditional edges
+│   └── state.py              # AgentState TypedDict — single source of truth
 │
 ├── tools/
-│   ├── loader.py         # CSV parser, type casting, date range
-│   ├── metrics.py        # Pure metric functions for all 3 audiences
+│   ├── loader.py             # CSV parser, column aliasing, type casting, date range
+│   ├── metrics.py            # Pure metric functions for all 3 audiences
 │   ├── dashboard_builder.py  # Generates 3 individual HTML files
-│   └── combiner.py       # Assembles the combined 3-tab HTML
+│   └── combiner.py           # Assembles the combined 3-tab HTML
 │
 ├── config/
-│   └── settings.py       # Reads REPORTS_DIR, LOG_LEVEL from env
+│   └── settings.py           # Reads REPORTS_DIR, LOG_LEVEL from env
 │
-├── memory/               # Reserved for future metric caching
+├── memory/                   # Reserved for future metric caching
 │
 ├── tests/
-│   ├── conftest.py       # Shared fixtures (8-row sample CSV)
-│   ├── test_loader.py    # Unit tests for CSV loader
-│   ├── test_metrics.py   # Unit tests for all metric functions
-│   └── test_graph.py     # End-to-end integration tests (no LLM)
+│   ├── conftest.py           # Shared fixtures (8-row sample CSV)
+│   ├── test_loader.py        # Unit tests for CSV loader
+│   ├── test_metrics.py       # Unit tests for all metric functions
+│   └── test_graph.py         # End-to-end integration tests (no LLM)
 │
-├── datasets/             # Put your CSV here
-├── reports/              # Generated HTML dashboards land here (gitignored)
-├── main.py               # CLI entry point
+├── datasets/                 # Put your CSV here
+├── reports/                  # Generated HTML dashboards land here (gitignored)
+├── main.py                   # CLI entry point
 └── pyproject.toml
 ```
 
@@ -67,17 +67,20 @@ agent-sales-dashboard/
 
 ## Expected CSV columns
 
-| Column | Type | Description |
-|---|---|---|
-| `Order ID` | string | Unique transaction identifier |
-| `Date` | date (ISO 8601) | Transaction date |
-| `Category` | string | Product category |
-| `Product Name` | string | Specific product |
-| `Quantity` | int | Units sold |
-| `Unit Price` | float | Price per unit |
-| `Total Price` | float | `Quantity × Unit Price` |
-| `Region` | string | Geographic region |
-| `Payment Method` | string | e.g. Credit Card, PayPal |
+The agent accepts the following column names. Alternative names are automatically
+remapped by `loader.py` — no manual renaming needed.
+
+| Canonical name | Accepted aliases | Type | Description |
+|---|---|---|---|
+| `Order ID` | `Transaction ID` | string | Unique transaction identifier |
+| `Date` | — | date (ISO 8601) | Transaction date |
+| `Category` | `Product Category` | string | Product category |
+| `Product Name` | — | string | Specific product |
+| `Quantity` | `Units Sold` | int | Units sold |
+| `Unit Price` | — | float | Price per unit |
+| `Total Price` | `Total Revenue` | float | `Quantity × Unit Price` |
+| `Region` | — | string | Geographic region |
+| `Payment Method` | — | string | e.g. Credit Card, PayPal |
 
 ---
 
@@ -88,6 +91,10 @@ agent-sales-dashboard/
 ```bash
 git clone https://github.com/your-username/agent-sales-dashboard
 cd agent-sales-dashboard
+
+# With conda (recommended)
+conda create -n agent-sales python=3.11 -y
+conda activate agent-sales
 
 pip install -e ".[anthropic]"
 # or just: pip install langgraph langchain-core
@@ -120,10 +127,10 @@ python main.py --source datasets/sales.csv --output-json state.json
 
 ```
 reports/
-├── dashboard_exec_20240315_143201.html       ← Топ-менеджмент
-├── dashboard_product_20240315_143201.html    ← Продуктовая команда
-├── dashboard_marketing_20240315_143201.html  ← Маркетинг / Growth
-└── dashboard_combined_20240315_143201.html   ← ★ All three with tab switcher
+├── dashboard_exec_20240315_143201.html       <- Executive
+├── dashboard_product_20240315_143201.html    <- Product Team
+├── dashboard_marketing_20240315_143201.html  <- Marketing / Growth
+└── dashboard_combined_20240315_143201.html   <- * All three with tab switcher
 ```
 
 Open any file in a browser. `dashboard_combined_*.html` is the main deliverable —
@@ -135,40 +142,40 @@ it has three tabs with a colored tab switcher (purple / teal / coral).
 
 ```
 ================================================================
-  ✅  Dashboards generated successfully
+  [OK]  Dashboards generated successfully
 ================================================================
 
   Agent log (4 steps):
-    [loader] Loaded 240,000 rows × 9 cols from 'datasets/sales.csv'
+    [loader] Loaded 240,000 rows x 9 cols from 'datasets/sales.csv'
     [metrics] exec: 9 keys | product: 10 keys | marketing: 11 keys
-    [builder] Dashboards written → reports/
-    [combiner] Combined dashboard → reports/dashboard_combined_20240315_143201.html
+    [builder] Dashboards written -> reports/
+    [combiner] Combined dashboard -> reports/dashboard_combined_20240315_143201.html
 
   Output files:
-      Топ-менеджмент   → reports/dashboard_exec_20240315_143201.html
-      Продуктовая      → reports/dashboard_product_20240315_143201.html
-      Маркетинг        → reports/dashboard_marketing_20240315_143201.html
-      ★ Combined       → reports/dashboard_combined_20240315_143201.html
+      Executive     -> reports/dashboard_exec_20240315_143201.html
+      Product Team  -> reports/dashboard_product_20240315_143201.html
+      Marketing     -> reports/dashboard_marketing_20240315_143201.html
+      * Combined    -> reports/dashboard_combined_20240315_143201.html
 ```
 
 ---
 
 ## Dashboards in detail
 
-### Топ-менеджмент (Executive)
+### Executive
 - KPI cards: Revenue, Orders, AOV, Units sold
 - Line chart: Revenue by month
 - Bar + Doughnut: Revenue by category
 - Bar: Seasonality index by calendar month
 
-### Продуктовая команда (Product)
+### Product Team
 - KPI cards: Top category, Top product, SKU count, Avg qty/order
 - Horizontal bar: Top-15 products by revenue
 - Horizontal bar: Revenue by region
 - Stacked bar: Category mix by region
 - Heatmap table: Category × calendar month
 
-### Маркетинг / Growth
+### Marketing / Growth
 - KPI cards: Top region, Top payment, Region count, Payment count
 - Doughnut: Payment method share (% of orders)
 - Bar: AOV by payment method
