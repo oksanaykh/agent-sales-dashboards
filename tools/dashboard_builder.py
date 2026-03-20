@@ -21,9 +21,9 @@ PALETTE_TEAL   = ["#0F6E56", "#1D9E75", "#5DCAA5", "#9FE1CB", "#085041", "#04342
 PALETTE_CORAL  = ["#993C1D", "#D85A30", "#F0997B", "#F5C4B3", "#712B13", "#4A1B0C", "#E07050"]
 PALETTE_MULTI  = ["#534AB7", "#0F6E56", "#993C1D", "#BA7517", "#3C3489", "#085041", "#712B13"]
 
-MONTHS_RU = ["Янв", "Фев", "Мар", "Апр", "Май", "Июн",
-             "Июл", "Авг", "Сен", "Окт", "Ноя", "Дек"]
-WEEKDAYS_RU = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"]
+MONTHS_EN   = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
+               "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+WEEKDAYS_EN = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
 
 BASE_STYLE = """
 <style>
@@ -89,49 +89,49 @@ def build_exec_dashboard(m: dict, reports_dir: str) -> str:
     season   = m["seasonality_index"]
     season_colors = [PALETTE_PURPLE[0] if v >= 1 else PALETTE_PURPLE[2] for v in season]
 
-    html = f"""<!DOCTYPE html><html lang="ru"><head><meta charset="UTF-8">
-<title>Топ-менеджмент — Sales Dashboard</title>
+    html = f"""<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8">
+<title>Executive — Sales Dashboard</title>
 {BASE_STYLE}
 </head><body><div class="page">
-<h1>Топ-менеджмент <span>Executive Summary</span></h1>
+<h1>Executive <span>Summary</span></h1>
 <div class="kpi-row">
   <div class="kpi" style="border-top:2px solid #534AB7">
     <div class="kpi-label">Revenue</div>
     <div class="kpi-value">{_fmt(m['total_revenue'])}</div>
-    <div class="kpi-sub">{m['total_orders']:,} заказов</div>
+    <div class="kpi-sub">{m['total_orders']:,} orders</div>
   </div>
   <div class="kpi" style="border-top:2px solid #534AB7">
-    <div class="kpi-label">Заказы</div>
+    <div class="kpi-label">Orders</div>
     <div class="kpi-value">{m['total_orders']:,}</div>
-    <div class="kpi-sub">всего транзакций</div>
+    <div class="kpi-sub">total transactions</div>
   </div>
   <div class="kpi" style="border-top:2px solid #534AB7">
     <div class="kpi-label">AOV</div>
     <div class="kpi-value">{_fmt(m['aov'])}</div>
-    <div class="kpi-sub">средний чек</div>
+    <div class="kpi-sub">avg order value</div>
   </div>
   <div class="kpi" style="border-top:2px solid #534AB7">
     <div class="kpi-label">Units sold</div>
     <div class="kpi-value">{m['total_units']:,}</div>
-    <div class="kpi-sub">единиц продано</div>
+    <div class="kpi-sub">units sold</div>
   </div>
 </div>
 <div class="full card">
-  <div class="card-title">Revenue по месяцам</div>
+  <div class="card-title">Revenue by month</div>
   <div class="chart-wrap" style="height:220px"><canvas id="revLine"></canvas></div>
 </div>
 <div class="grid2">
   <div class="card">
-    <div class="card-title">Revenue по категориям</div>
+    <div class="card-title">Revenue by category</div>
     <div class="chart-wrap" style="height:260px"><canvas id="catBar"></canvas></div>
   </div>
   <div class="card">
-    <div class="card-title">Доля категорий</div>
+    <div class="card-title">Category share</div>
     <div class="chart-wrap" style="height:260px"><canvas id="catPie"></canvas></div>
   </div>
 </div>
 <div class="full card">
-  <div class="card-title">Сезонность — индекс по месяцам (1.0 = среднее)</div>
+  <div class="card-title">Seasonality index by month (1.0 = average)</div>
   <div class="chart-wrap" style="height:180px"><canvas id="season"></canvas></div>
 </div>
 </div>
@@ -144,7 +144,7 @@ const catVals = {json.dumps(cat_vals)};
 const season = {json.dumps(season)};
 const seasonColors = {json.dumps(season_colors)};
 const purplePalette = {json.dumps(PALETTE_PURPLE)};
-const monthsRu = {json.dumps(MONTHS_RU)};
+const monthsEn = {json.dumps(MONTHS_EN)};
 
 new Chart(document.getElementById('revLine'), {{
   type: 'line',
@@ -180,10 +180,10 @@ new Chart(document.getElementById('catPie'), {{
 
 new Chart(document.getElementById('season'), {{
   type: 'bar',
-  data: {{ labels: monthsRu, datasets: [{{ data: season, backgroundColor: seasonColors, borderRadius: 4 }}] }},
+  data: {{ labels: monthsEn, datasets: [{{ data: season, backgroundColor: seasonColors, borderRadius: 4 }}] }},
   options: {{ responsive:true, maintainAspectRatio:false,
     plugins:{{ legend:{{display:false}},
-              tooltip:{{callbacks:{{label:ctx=>'Индекс: '+ctx.parsed.y}}}} }},
+              tooltip:{{callbacks:{{label:ctx=>'Index: '+ctx.parsed.y}}}} }},
     scales:{{ x:{{ticks:{{font:{{size:11}}}}}}, y:{{ticks:{{font:{{size:11}}}}}} }}
   }}
 }});
@@ -196,7 +196,7 @@ new Chart(document.getElementById('season'), {{
 # ── Product ────────────────────────────────────────────────────────────────────
 
 def build_product_dashboard(m: dict, reports_dir: str) -> str:
-    top_prods = m["top_products"]      # [(name, rev), ...]
+    top_prods = m["top_products"]
     top_names = [p[0] for p in top_prods]
     top_revs  = [p[1] for p in top_prods]
     h_height  = max(len(top_names) * 32 + 80, 300)
@@ -207,7 +207,6 @@ def build_product_dashboard(m: dict, reports_dir: str) -> str:
     cats = list(m["cat_by_region"].keys())
     all_regs = regs
 
-    # Stacked datasets: category × region
     stacked_datasets = []
     for i, cat in enumerate(cats):
         stacked_datasets.append({
@@ -217,53 +216,52 @@ def build_product_dashboard(m: dict, reports_dir: str) -> str:
             "stack": "s",
         })
 
-    # Heatmap HTML
     heat_html = _build_heatmap_html(m["cat_by_month"], cats)
 
-    html = f"""<!DOCTYPE html><html lang="ru"><head><meta charset="UTF-8">
-<title>Продуктовая команда — Sales Dashboard</title>
+    html = f"""<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8">
+<title>Product Team — Sales Dashboard</title>
 {BASE_STYLE}
 </head><body><div class="page">
-<h1>Продуктовая команда</h1>
+<h1>Product Team</h1>
 <div class="kpi-row">
   <div class="kpi" style="border-top:2px solid #0F6E56">
-    <div class="kpi-label">Топ-категория</div>
+    <div class="kpi-label">Top category</div>
     <div class="kpi-value" style="font-size:16px">{m['top_category']}</div>
     <div class="kpi-sub">{_fmt(m['revenue_by_category'].get(m['top_category'],0))}</div>
   </div>
   <div class="kpi" style="border-top:2px solid #0F6E56">
-    <div class="kpi-label">Топ-продукт</div>
+    <div class="kpi-label">Top product</div>
     <div class="kpi-value" style="font-size:13px">{m['top_product']}</div>
     <div class="kpi-sub">{_fmt(m['top_product_rev'])}</div>
   </div>
   <div class="kpi" style="border-top:2px solid #0F6E56">
-    <div class="kpi-label">Кол-во SKU</div>
+    <div class="kpi-label">SKU count</div>
     <div class="kpi-value">{m['sku_count']:,}</div>
-    <div class="kpi-sub">уникальных продуктов</div>
+    <div class="kpi-sub">unique products</div>
   </div>
   <div class="kpi" style="border-top:2px solid #0F6E56">
-    <div class="kpi-label">Ср. qty / заказ</div>
+    <div class="kpi-label">Avg qty / order</div>
     <div class="kpi-value">{m['avg_qty_per_order']}</div>
     <div class="kpi-sub">units per order</div>
   </div>
 </div>
 <div class="grid2">
   <div class="card">
-    <div class="card-title">Топ-{len(top_names)} продуктов по revenue</div>
+    <div class="card-title">Top {len(top_names)} products by revenue</div>
     <div class="chart-wrap" style="height:{h_height}px"><canvas id="topBar"></canvas></div>
   </div>
   <div class="card">
-    <div class="card-title">Revenue по регионам</div>
+    <div class="card-title">Revenue by region</div>
     <div class="chart-wrap" style="height:{h_height}px"><canvas id="regBar"></canvas></div>
   </div>
 </div>
 <div class="grid2">
   <div class="card">
-    <div class="card-title">Категории × регион (stacked)</div>
+    <div class="card-title">Categories x region (stacked)</div>
     <div class="chart-wrap" style="height:280px"><canvas id="catReg"></canvas></div>
   </div>
   <div class="card">
-    <div class="card-title">Тепловая: категория × месяц</div>
+    <div class="card-title">Heatmap: category x month</div>
     {heat_html}
   </div>
 </div>
@@ -279,16 +277,14 @@ const stackedDs = {json.dumps(stacked_datasets)};
 
 new Chart(document.getElementById('topBar'), {{
   type:'bar', data:{{labels:topNames, datasets:[{{data:topRevs,backgroundColor:'#1D9E75',borderRadius:4}}]}},
-  options:{{indexAxis:'y',responsive:true,maintainAspectRatio:false,
-    plugins:{{legend:{{display:false}}}},
+  options:{{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{{legend:{{display:false}}}},
     scales:{{x:{{ticks:{{callback:v=>v>=1e6?'$'+(v/1e6).toFixed(1)+'M':'$'+(v/1e3).toFixed(0)+'K',font:{{size:10}}}}}},
              y:{{ticks:{{font:{{size:10}}}}}}}}}}
 }});
 
 new Chart(document.getElementById('regBar'), {{
   type:'bar', data:{{labels:regs, datasets:[{{data:regVals,backgroundColor:tealPal,borderRadius:4}}]}},
-  options:{{indexAxis:'y',responsive:true,maintainAspectRatio:false,
-    plugins:{{legend:{{display:false}}}},
+  options:{{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{{legend:{{display:false}}}},
     scales:{{x:{{ticks:{{callback:v=>v>=1e6?'$'+(v/1e6).toFixed(1)+'M':'$'+(v/1e3).toFixed(0)+'K',font:{{size:11}}}}}},
              y:{{ticks:{{font:{{size:11}}}}}}}}}}
 }});
@@ -319,13 +315,13 @@ def _build_heatmap_html(cat_by_month: dict, cats: list[str]) -> str:
             cells += f'<td style="background:rgba(29,158,117,{ratio:.2f});text-align:center" title="${v:,.0f}"></td>'
         rows_html += f"<tr><td class='label'>{cat}</td>{cells}</tr>"
 
-    headers = "".join(f"<th>{m}</th>" for m in MONTHS_RU)
+    headers = "".join(f"<th>{m}</th>" for m in MONTHS_EN)
     return f"""<div style="overflow-x:auto;padding-top:.5rem">
 <table class="heat">
   <thead><tr><th></th>{headers}</tr></thead>
   <tbody>{rows_html}</tbody>
 </table>
-<p style="font-size:10px;color:#9a9991;margin-top:.5rem">Цвет = revenue (темнее = больше). Наведи для значения.</p>
+<p style="font-size:10px;color:#9a9991;margin-top:.5rem">Color = revenue (darker = higher). Hover for value.</p>
 </div>"""
 
 
@@ -366,54 +362,54 @@ def build_marketing_dashboard(m: dict, reports_dir: str) -> str:
 
     total_orders = m["total_orders"]
 
-    html = f"""<!DOCTYPE html><html lang="ru"><head><meta charset="UTF-8">
-<title>Маркетинг / Growth — Sales Dashboard</title>
+    html = f"""<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8">
+<title>Marketing / Growth — Sales Dashboard</title>
 {BASE_STYLE}
 </head><body><div class="page">
-<h1>Маркетинг / Growth</h1>
+<h1>Marketing / Growth</h1>
 <div class="kpi-row">
   <div class="kpi" style="border-top:2px solid #993C1D">
-    <div class="kpi-label">Топ-регион</div>
+    <div class="kpi-label">Top region</div>
     <div class="kpi-value" style="font-size:15px">{m['top_region']}</div>
     <div class="kpi-sub">{_fmt(m['revenue_by_region'].get(m['top_region'],0))}</div>
   </div>
   <div class="kpi" style="border-top:2px solid #993C1D">
-    <div class="kpi-label">Топ оплата</div>
+    <div class="kpi-label">Top payment</div>
     <div class="kpi-value" style="font-size:15px">{m['top_payment']}</div>
-    <div class="kpi-sub">{m['orders_by_payment'].get(m['top_payment'],0):,} заказов</div>
+    <div class="kpi-sub">{m['orders_by_payment'].get(m['top_payment'],0):,} orders</div>
   </div>
   <div class="kpi" style="border-top:2px solid #993C1D">
-    <div class="kpi-label">Регионов</div>
+    <div class="kpi-label">Regions</div>
     <div class="kpi-value">{len(regs)}</div>
-    <div class="kpi-sub">в датасете</div>
+    <div class="kpi-sub">in dataset</div>
   </div>
   <div class="kpi" style="border-top:2px solid #993C1D">
-    <div class="kpi-label">Методов оплаты</div>
+    <div class="kpi-label">Payment methods</div>
     <div class="kpi-value">{len(pays)}</div>
-    <div class="kpi-sub">в датасете</div>
+    <div class="kpi-sub">in dataset</div>
   </div>
 </div>
 <div class="grid2">
   <div class="card">
-    <div class="card-title">Доля методов оплаты (заказы)</div>
+    <div class="card-title">Payment method share (orders)</div>
     <div class="chart-wrap" style="height:260px"><canvas id="payDonut"></canvas></div>
   </div>
   <div class="card">
-    <div class="card-title">AOV по методу оплаты</div>
+    <div class="card-title">AOV by payment method</div>
     <div class="chart-wrap" style="height:260px"><canvas id="payAov"></canvas></div>
   </div>
 </div>
 <div class="full card">
-  <div class="card-title">Revenue по регионам во времени</div>
+  <div class="card-title">Revenue by region over time</div>
   <div class="chart-wrap" style="height:220px"><canvas id="regLine"></canvas></div>
 </div>
 <div class="grid2">
   <div class="card">
-    <div class="card-title">Заказы по дням недели</div>
+    <div class="card-title">Orders by day of week</div>
     <div class="chart-wrap" style="height:200px"><canvas id="weekday"></canvas></div>
   </div>
   <div class="card">
-    <div class="card-title">Оплата × категория (заказы)</div>
+    <div class="card-title">Payment method x category</div>
     <div class="chart-wrap" style="height:200px"><canvas id="payCat"></canvas></div>
   </div>
 </div>
@@ -428,7 +424,7 @@ const regLineDs   = {json.dumps(reg_line_datasets)};
 const payCatDs    = {json.dumps(pay_cat_datasets)};
 const wd          = {json.dumps(wd)};
 const wdColors    = {json.dumps(wd_colors)};
-const wdLabels    = {json.dumps(WEEKDAYS_RU)};
+const wdLabels    = {json.dumps(WEEKDAYS_EN)};
 const coralPal    = {json.dumps(PALETTE_CORAL)};
 const totalOrders = {total_orders};
 

@@ -23,13 +23,11 @@ from agents.graph import get_app
 from agents.state import initial_state
 
 
-# ── Logging ───────────────────────────────────────────────────────────────────
-
 def _setup_logging(verbose: bool) -> None:
     level = logging.DEBUG if verbose else logging.INFO
     logging.basicConfig(
         level=level,
-        format="%(asctime)s [%(levelname)-8s] %(name)s — %(message)s",
+        format="%(asctime)s [%(levelname)-8s] %(name)s - %(message)s",
         datefmt="%H:%M:%S",
         handlers=[logging.StreamHandler(sys.stdout)],
     )
@@ -37,8 +35,6 @@ def _setup_logging(verbose: bool) -> None:
         for noisy in ("httpx", "httpcore", "anthropic", "urllib3"):
             logging.getLogger(noisy).setLevel(logging.WARNING)
 
-
-# ── CLI ───────────────────────────────────────────────────────────────────────
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
@@ -77,18 +73,15 @@ examples:
     return parser
 
 
-# ── Summary printer ───────────────────────────────────────────────────────────
-
 def _print_summary(final_state: dict) -> None:
     messages = final_state.get("messages", [])
     error    = final_state.get("error")
-    combined = final_state.get("dashboard_combined_path", "")
 
     print("\n" + "=" * 64)
     if error:
-        print(f"  ❌  Agent failed: {error}")
+        print(f"  [FAILED]  Agent failed: {error}")
     else:
-        print(f"  ✅  Dashboards generated successfully")
+        print(f"  [OK]  Dashboards generated successfully")
     print("=" * 64)
 
     print(f"\n  Agent log ({len(messages)} steps):")
@@ -97,22 +90,19 @@ def _print_summary(final_state: dict) -> None:
 
     if not error:
         print(f"\n  Output files:")
-        for key in ("dashboard_exec_path", "dashboard_product_path",
-                    "dashboard_marketing_path", "dashboard_combined_path"):
+        labels = {
+            "dashboard_exec_path":      "  Executive    ",
+            "dashboard_product_path":   "  Product Team ",
+            "dashboard_marketing_path": "  Marketing    ",
+            "dashboard_combined_path":  "  * Combined   ",
+        }
+        for key, label in labels.items():
             path = final_state.get(key, "")
             if path:
-                label = {
-                    "dashboard_exec_path":      "  Топ-менеджмент  ",
-                    "dashboard_product_path":   "  Продуктовая     ",
-                    "dashboard_marketing_path": "  Маркетинг       ",
-                    "dashboard_combined_path":  "  ★ Combined      ",
-                }[key]
-                print(f"    {label} → {path}")
+                print(f"    {label} -> {path}")
 
     print()
 
-
-# ── Main ──────────────────────────────────────────────────────────────────────
 
 def main() -> int:
     parser = build_parser()
@@ -121,9 +111,8 @@ def main() -> int:
     _setup_logging(args.verbose)
     logger = logging.getLogger(__name__)
 
-    # Validate source
     if not Path(args.source).exists():
-        print(f"❌ Source file not found: {args.source}", file=sys.stderr)
+        print(f"[ERROR] Source file not found: {args.source}", file=sys.stderr)
         return 1
 
     logger.info("Starting Sales Dashboard Agent")
@@ -138,7 +127,6 @@ def main() -> int:
         logger.exception("Agent crashed: %s", exc)
         return 2
 
-    # Optionally save state as JSON
     if args.output_json:
         out = Path(args.output_json)
         out.parent.mkdir(parents=True, exist_ok=True)
@@ -146,11 +134,10 @@ def main() -> int:
             json.dumps(final_state, indent=2, default=str, ensure_ascii=False),
             encoding="utf-8",
         )
-        logger.info("State saved → %s", out)
+        logger.info("State saved -> %s", out)
 
     _print_summary(final_state)
 
-    # Open in browser
     if args.open and not final_state.get("error"):
         combined = final_state.get("dashboard_combined_path", "")
         if combined and Path(combined).exists():

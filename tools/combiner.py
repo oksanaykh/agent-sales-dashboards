@@ -15,8 +15,8 @@ from pathlib import Path
 logger = logging.getLogger(__name__)
 
 CHARTJS_CDN = "https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"
-MONTHS_RU   = ["Янв","Фев","Мар","Апр","Май","Июн","Июл","Авг","Сен","Окт","Ноя","Дек"]
-WEEKDAYS_RU = ["Пн","Вт","Ср","Чт","Пт","Сб","Вс"]
+MONTHS_EN   = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]
+WEEKDAYS_EN = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"]
 
 P_PURPLE = ["#534AB7","#7F77DD","#AFA9EC","#CECBF6","#3C3489","#26215C","#8580D5"]
 P_TEAL   = ["#0F6E56","#1D9E75","#5DCAA5","#9FE1CB","#085041","#04342C","#2DC98A"]
@@ -41,11 +41,11 @@ def _build_heatmap(cat_by_month: dict, cats: list[str]) -> str:
             for v in vals
         )
         rows += f"<tr><td style='font-size:10px;color:#6b6a65;white-space:nowrap;padding-right:6px'>{cat}</td>{cells}</tr>"
-    heads = "".join(f"<th style='font-weight:500;padding:3px 2px;color:#6b6a65;text-align:center;font-size:10px'>{m}</th>" for m in MONTHS_RU)
+    heads = "".join(f"<th style='font-weight:500;padding:3px 2px;color:#6b6a65;text-align:center;font-size:10px'>{m}</th>" for m in MONTHS_EN)
     return f"""<div style="overflow-x:auto">
 <table style="width:100%;border-collapse:collapse">
 <thead><tr><th></th>{heads}</tr></thead><tbody>{rows}</tbody></table>
-<p style="font-size:10px;color:#9a9991;margin-top:6px">Цвет = revenue (темнее = больше). Наведи для значения.</p></div>"""
+<p style="font-size:10px;color:#9a9991;margin-top:6px">Color = revenue (darker = higher). Hover for value.</p></div>"""
 
 
 def build_combined_dashboard(
@@ -57,11 +57,11 @@ def build_combined_dashboard(
     reports_dir: str,
 ) -> str:
 
-    e = exec_metrics
-    p = product_metrics
+    e  = exec_metrics
+    p  = product_metrics
     mk = marketing_metrics
 
-    # ── exec data
+    # exec data
     e_months   = e["months_sorted"]
     e_rev_vals = [e["revenue_by_month"][k] for k in e_months]
     e_cats     = list(e["revenue_by_category"].keys())
@@ -69,7 +69,7 @@ def build_combined_dashboard(
     e_season   = e["seasonality_index"]
     e_sc       = [P_PURPLE[0] if v >= 1 else P_PURPLE[2] for v in e_season]
 
-    # ── product data
+    # product data
     top_names  = [x[0] for x in p["top_products"]]
     top_revs   = [x[1] for x in p["top_products"]]
     p_regs     = list(p["revenue_by_region"].keys())
@@ -80,7 +80,7 @@ def build_combined_dashboard(
                   for i,c in enumerate(p_cats)]
     heat_html  = _build_heatmap(p["cat_by_month"], p_cats)
 
-    # ── marketing data
+    # marketing data
     pays        = list(mk["orders_by_payment"].keys())
     pay_orders  = [mk["orders_by_payment"][p_] for p_ in pays]
     pay_aov     = [mk["aov_by_payment"].get(p_, 0) for p_ in pays]
@@ -102,7 +102,7 @@ def build_combined_dashboard(
     gen_ts = datetime.now().strftime("%Y-%m-%d %H:%M")
 
     html = f"""<!DOCTYPE html>
-<html lang="ru">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -141,160 +141,159 @@ footer{{text-align:center;font-size:11px;color:#9a9991;padding:2rem;border-top:.
 
 <div class="topbar">
   <div class="topbar-title">Sales Analytics</div>
-  <div class="topbar-meta">{source_name} &nbsp;·&nbsp; {e['total_orders']:,} строк &nbsp;·&nbsp; {date_range[0]} – {date_range[1]}</div>
+  <div class="topbar-meta">{source_name} &nbsp;&middot;&nbsp; {e['total_orders']:,} rows &nbsp;&middot;&nbsp; {date_range[0]} &ndash; {date_range[1]}</div>
 </div>
 
 <div class="switcher">
-  <button class="sw-btn active" data-tab="exec"><span class="dot" style="background:#534AB7"></span> Топ-менеджмент</button>
-  <button class="sw-btn" data-tab="product"><span class="dot" style="background:#0F6E56"></span> Продуктовая команда</button>
-  <button class="sw-btn" data-tab="marketing"><span class="dot" style="background:#993C1D"></span> Маркетинг / Growth</button>
+  <button class="sw-btn active" data-tab="exec"><span class="dot" style="background:#534AB7"></span> Executive</button>
+  <button class="sw-btn" data-tab="product"><span class="dot" style="background:#0F6E56"></span> Product Team</button>
+  <button class="sw-btn" data-tab="marketing"><span class="dot" style="background:#993C1D"></span> Marketing / Growth</button>
 </div>
 
-<!-- ══ EXECUTIVE ══════════════════════════════════════════════════════════ -->
+<!-- EXECUTIVE -->
 <div class="dashboard active" id="tab-exec">
 <div class="kpi-row">
   <div class="kpi" style="border-top:2px solid #534AB7">
     <div class="kpi-label">Revenue</div>
     <div class="kpi-value">{_fmt_py(e['total_revenue'])}</div>
-    <div class="kpi-sub">{e['total_orders']:,} заказов</div>
+    <div class="kpi-sub">{e['total_orders']:,} orders</div>
   </div>
   <div class="kpi" style="border-top:2px solid #534AB7">
-    <div class="kpi-label">Заказы</div>
+    <div class="kpi-label">Orders</div>
     <div class="kpi-value">{e['total_orders']:,}</div>
-    <div class="kpi-sub">всего транзакций</div>
+    <div class="kpi-sub">total transactions</div>
   </div>
   <div class="kpi" style="border-top:2px solid #534AB7">
     <div class="kpi-label">AOV</div>
     <div class="kpi-value">{_fmt_py(e['aov'])}</div>
-    <div class="kpi-sub">средний чек</div>
+    <div class="kpi-sub">avg order value</div>
   </div>
   <div class="kpi" style="border-top:2px solid #534AB7">
     <div class="kpi-label">Units sold</div>
     <div class="kpi-value">{e['total_units']:,}</div>
-    <div class="kpi-sub">единиц продано</div>
+    <div class="kpi-sub">units sold</div>
   </div>
 </div>
 <div class="full card">
-  <div class="card-title">Revenue по месяцам</div>
+  <div class="card-title">Revenue by month</div>
   <div class="chart-wrap" style="height:220px"><canvas id="e-rev-line"></canvas></div>
 </div>
 <div class="grid2">
   <div class="card">
-    <div class="card-title">Revenue по категориям</div>
+    <div class="card-title">Revenue by category</div>
     <div class="chart-wrap" style="height:260px"><canvas id="e-cat-bar"></canvas></div>
   </div>
   <div class="card">
-    <div class="card-title">Доля категорий</div>
+    <div class="card-title">Category share</div>
     <div class="chart-wrap" style="height:260px"><canvas id="e-cat-pie"></canvas></div>
   </div>
 </div>
 <div class="full card">
-  <div class="card-title">Сезонность — индекс по месяцам (1.0 = среднее)</div>
+  <div class="card-title">Seasonality index by month (1.0 = average)</div>
   <div class="chart-wrap" style="height:180px"><canvas id="e-season"></canvas></div>
 </div>
 </div>
 
-<!-- ══ PRODUCT ════════════════════════════════════════════════════════════ -->
+<!-- PRODUCT -->
 <div class="dashboard" id="tab-product">
 <div class="kpi-row">
   <div class="kpi" style="border-top:2px solid #0F6E56">
-    <div class="kpi-label">Топ-категория</div>
+    <div class="kpi-label">Top category</div>
     <div class="kpi-value" style="font-size:16px">{p['top_category']}</div>
     <div class="kpi-sub">{_fmt_py(p['revenue_by_category'].get(p['top_category'],0))}</div>
   </div>
   <div class="kpi" style="border-top:2px solid #0F6E56">
-    <div class="kpi-label">Топ-продукт</div>
+    <div class="kpi-label">Top product</div>
     <div class="kpi-value" style="font-size:13px">{p['top_product']}</div>
     <div class="kpi-sub">{_fmt_py(p['top_product_rev'])}</div>
   </div>
   <div class="kpi" style="border-top:2px solid #0F6E56">
-    <div class="kpi-label">Кол-во SKU</div>
+    <div class="kpi-label">SKU count</div>
     <div class="kpi-value">{p['sku_count']:,}</div>
-    <div class="kpi-sub">уникальных продуктов</div>
+    <div class="kpi-sub">unique products</div>
   </div>
   <div class="kpi" style="border-top:2px solid #0F6E56">
-    <div class="kpi-label">Ср. qty / заказ</div>
+    <div class="kpi-label">Avg qty / order</div>
     <div class="kpi-value">{p['avg_qty_per_order']}</div>
     <div class="kpi-sub">units per order</div>
   </div>
 </div>
 <div class="grid2">
   <div class="card">
-    <div class="card-title">Топ-{len(top_names)} продуктов по revenue</div>
+    <div class="card-title">Top {len(top_names)} products by revenue</div>
     <div class="chart-wrap" style="height:{h_h}px"><canvas id="p-top-bar"></canvas></div>
   </div>
   <div class="card">
-    <div class="card-title">Revenue по регионам</div>
+    <div class="card-title">Revenue by region</div>
     <div class="chart-wrap" style="height:{h_h}px"><canvas id="p-reg-bar"></canvas></div>
   </div>
 </div>
 <div class="grid2">
   <div class="card">
-    <div class="card-title">Категории × регион (stacked)</div>
+    <div class="card-title">Categories x region (stacked)</div>
     <div class="chart-wrap" style="height:280px"><canvas id="p-cat-reg"></canvas></div>
   </div>
   <div class="card">
-    <div class="card-title">Тепловая: категория × месяц</div>
+    <div class="card-title">Heatmap: category x month</div>
     {heat_html}
   </div>
 </div>
 </div>
 
-<!-- ══ MARKETING ══════════════════════════════════════════════════════════ -->
+<!-- MARKETING -->
 <div class="dashboard" id="tab-marketing">
 <div class="kpi-row">
   <div class="kpi" style="border-top:2px solid #993C1D">
-    <div class="kpi-label">Топ-регион</div>
+    <div class="kpi-label">Top region</div>
     <div class="kpi-value" style="font-size:15px">{mk['top_region']}</div>
     <div class="kpi-sub">{_fmt_py(mk['revenue_by_region'].get(mk['top_region'],0))}</div>
   </div>
   <div class="kpi" style="border-top:2px solid #993C1D">
-    <div class="kpi-label">Топ оплата</div>
+    <div class="kpi-label">Top payment</div>
     <div class="kpi-value" style="font-size:15px">{mk['top_payment']}</div>
-    <div class="kpi-sub">{mk['orders_by_payment'].get(mk['top_payment'],0):,} заказов</div>
+    <div class="kpi-sub">{mk['orders_by_payment'].get(mk['top_payment'],0):,} orders</div>
   </div>
   <div class="kpi" style="border-top:2px solid #993C1D">
-    <div class="kpi-label">Регионов</div>
+    <div class="kpi-label">Regions</div>
     <div class="kpi-value">{len(m_regs)}</div>
-    <div class="kpi-sub">в датасете</div>
+    <div class="kpi-sub">in dataset</div>
   </div>
   <div class="kpi" style="border-top:2px solid #993C1D">
-    <div class="kpi-label">Методов оплаты</div>
+    <div class="kpi-label">Payment methods</div>
     <div class="kpi-value">{len(pays)}</div>
-    <div class="kpi-sub">в датасете</div>
+    <div class="kpi-sub">in dataset</div>
   </div>
 </div>
 <div class="grid2">
   <div class="card">
-    <div class="card-title">Доля методов оплаты (заказы)</div>
+    <div class="card-title">Payment method share (orders)</div>
     <div class="chart-wrap" style="height:260px"><canvas id="m-pay-donut"></canvas></div>
   </div>
   <div class="card">
-    <div class="card-title">AOV по методу оплаты</div>
+    <div class="card-title">AOV by payment method</div>
     <div class="chart-wrap" style="height:260px"><canvas id="m-pay-aov"></canvas></div>
   </div>
 </div>
 <div class="full card">
-  <div class="card-title">Revenue по регионам во времени</div>
+  <div class="card-title">Revenue by region over time</div>
   <div class="chart-wrap" style="height:220px"><canvas id="m-reg-line"></canvas></div>
 </div>
 <div class="grid2">
   <div class="card">
-    <div class="card-title">Заказы по дням недели</div>
+    <div class="card-title">Orders by day of week</div>
     <div class="chart-wrap" style="height:200px"><canvas id="m-weekday"></canvas></div>
   </div>
   <div class="card">
-    <div class="card-title">Оплата × категория</div>
+    <div class="card-title">Payment method x category</div>
     <div class="chart-wrap" style="height:200px"><canvas id="m-pay-cat"></canvas></div>
   </div>
 </div>
 </div>
 
-<footer>Сгенерировано агентом · {gen_ts} · источник: {source_name}</footer>
+<footer>Generated by agent &middot; {gen_ts} &middot; source: {source_name}</footer>
 
 <script src="{CHARTJS_CDN}"></script>
 <script>
-// ── Tab switching ─────────────────────────────────────────────
 document.querySelectorAll('.sw-btn').forEach(btn => {{
   btn.addEventListener('click', () => {{
     document.querySelectorAll('.sw-btn').forEach(b => b.classList.remove('active'));
@@ -304,20 +303,17 @@ document.querySelectorAll('.sw-btn').forEach(btn => {{
   }});
 }});
 
-// ── Data ─────────────────────────────────────────────────────
 const eMonths   = {json.dumps(e_months)};
 const eRevVals  = {json.dumps(e_rev_vals)};
 const eCats     = {json.dumps(e_cats)};
 const eCatVals  = {json.dumps(e_cat_vals)};
 const eSeason   = {json.dumps(e_season)};
 const eSC       = {json.dumps(e_sc)};
-
 const topNames  = {json.dumps(top_names)};
 const topRevs   = {json.dumps(top_revs)};
 const pRegs     = {json.dumps(p_regs)};
 const pRegVals  = {json.dumps(p_reg_vals)};
 const stackedDs = {json.dumps(stacked_ds)};
-
 const pays      = {json.dumps(pays)};
 const payOrders = {json.dumps(pay_orders)};
 const payAovV   = {json.dumps(pay_aov)};
@@ -326,13 +322,12 @@ const regLineDs = {json.dumps(reg_line_ds)};
 const payCatDs  = {json.dumps(pay_cat_ds)};
 const wd        = {json.dumps(wd)};
 const wdColors  = {json.dumps(wd_colors)};
-const wdLabels  = {json.dumps(WEEKDAYS_RU)};
-const monthsRu  = {json.dumps(MONTHS_RU)};
+const wdLabels  = {json.dumps(WEEKDAYS_EN)};
+const monthsEn  = {json.dumps(MONTHS_EN)};
 const totalO    = {e['total_orders']};
 
 function fmtV(v){{ return v>=1e6?'$'+(v/1e6).toFixed(1)+'M':v>=1e3?'$'+(v/1e3).toFixed(0)+'K':'$'+v; }}
 
-// ── Executive charts ──────────────────────────────────────────
 new Chart(document.getElementById('e-rev-line'),{{
   type:'line',data:{{labels:eMonths,datasets:[{{label:'Revenue',data:eRevVals,
     borderColor:'#534AB7',backgroundColor:'rgba(83,74,183,0.08)',fill:true,tension:0.4,
@@ -354,13 +349,11 @@ new Chart(document.getElementById('e-cat-pie'),{{
     plugins:{{legend:{{position:'right',labels:{{font:{{size:11}},boxWidth:10}}}}}}}}
 }});
 new Chart(document.getElementById('e-season'),{{
-  type:'bar',data:{{labels:monthsRu,datasets:[{{data:eSeason,backgroundColor:eSC,borderRadius:4}}]}},
+  type:'bar',data:{{labels:monthsEn,datasets:[{{data:eSeason,backgroundColor:eSC,borderRadius:4}}]}},
   options:{{responsive:true,maintainAspectRatio:false,
-    plugins:{{legend:{{display:false}},tooltip:{{callbacks:{{label:ctx=>'Индекс: '+ctx.parsed.y}}}}}},
+    plugins:{{legend:{{display:false}},tooltip:{{callbacks:{{label:ctx=>'Index: '+ctx.parsed.y}}}}}},
     scales:{{x:{{ticks:{{font:{{size:11}}}}}},y:{{ticks:{{font:{{size:11}}}}}}}}}}
 }});
-
-// ── Product charts ────────────────────────────────────────────
 new Chart(document.getElementById('p-top-bar'),{{
   type:'bar',data:{{labels:topNames,datasets:[{{data:topRevs,backgroundColor:'#1D9E75',borderRadius:4}}]}},
   options:{{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{{legend:{{display:false}}}},
@@ -378,8 +371,6 @@ new Chart(document.getElementById('p-cat-reg'),{{
     scales:{{x:{{stacked:true,ticks:{{font:{{size:10}}}}}},
              y:{{stacked:true,ticks:{{callback:fmtV,font:{{size:10}}}}}}}}}}
 }});
-
-// ── Marketing charts ──────────────────────────────────────────
 new Chart(document.getElementById('m-pay-donut'),{{
   type:'doughnut',data:{{labels:pays,datasets:[{{data:payOrders,
     backgroundColor:{json.dumps(P_CORAL)},borderWidth:1,borderColor:'#fff'}}]}},
