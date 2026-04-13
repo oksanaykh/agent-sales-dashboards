@@ -1,0 +1,777 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sales Dashboard Agent</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  /* ── Reset & base ── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:        #0e0e0f;
+    --bg2:       #161618;
+    --bg3:       #1e1e21;
+    --border:    rgba(255,255,255,0.07);
+    --border2:   rgba(255,255,255,0.12);
+    --text:      #f0ede8;
+    --muted:     #7a7875;
+    --accent:    #c8b89a;
+    --accent2:   #e8ddd0;
+    --purple:    #7f77dd;
+    --teal:      #1d9e75;
+    --coral:     #d85a30;
+    --success:   #2dc98a;
+    --error:     #e05050;
+    --radius:    12px;
+    --radius-lg: 20px;
+  }
+
+  html, body {
+    height: 100%;
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ── Layout ── */
+  .shell {
+    min-height: 100vh;
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+  }
+
+  /* ── Header ── */
+  header {
+    padding: 2rem 3rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+  }
+  .logo {
+    display: flex;
+    align-items: baseline;
+    gap: .5rem;
+  }
+  .logo-mark {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.4rem;
+    color: var(--accent);
+    letter-spacing: -.02em;
+  }
+  .logo-tag {
+    font-family: 'DM Mono', monospace;
+    font-size: .65rem;
+    color: var(--muted);
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    background: var(--bg3);
+    border: 1px solid var(--border2);
+    padding: 2px 7px;
+    border-radius: 20px;
+  }
+  .header-links {
+    display: flex;
+    gap: 1.5rem;
+    align-items: center;
+  }
+  .header-links a {
+    font-size: .8rem;
+    color: var(--muted);
+    text-decoration: none;
+    transition: color .2s;
+    letter-spacing: .01em;
+  }
+  .header-links a:hover { color: var(--text); }
+  .gh-link {
+    display: flex;
+    align-items: center;
+    gap: .4rem;
+    border: 1px solid var(--border2) !important;
+    padding: .35rem .8rem !important;
+    border-radius: 8px;
+    color: var(--text) !important;
+    font-size: .8rem !important;
+  }
+  .gh-link:hover { border-color: var(--accent) !important; color: var(--accent) !important; }
+
+  /* ── Main ── */
+  main {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem 2rem;
+  }
+
+  /* ── States ── */
+  .state { display: none; width: 100%; max-width: 560px; }
+  .state.active { display: block; }
+
+  /* ── Upload state ── */
+  .headline {
+    text-align: center;
+    margin-bottom: 2.5rem;
+  }
+  .headline h1 {
+    font-family: 'DM Serif Display', serif;
+    font-size: clamp(2rem, 5vw, 3rem);
+    letter-spacing: -.03em;
+    line-height: 1.1;
+    color: var(--accent2);
+    margin-bottom: .75rem;
+  }
+  .headline h1 em {
+    font-style: italic;
+    color: var(--accent);
+  }
+  .headline p {
+    font-size: .9rem;
+    color: var(--muted);
+    line-height: 1.6;
+    max-width: 400px;
+    margin: 0 auto;
+  }
+
+  /* Drop zone */
+  .drop-zone {
+    background: var(--bg2);
+    border: 1.5px dashed var(--border2);
+    border-radius: var(--radius-lg);
+    padding: 3rem 2rem;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color .2s, background .2s;
+    position: relative;
+  }
+  .drop-zone:hover, .drop-zone.drag-over {
+    border-color: var(--accent);
+    background: rgba(200,184,154,.04);
+  }
+  .drop-zone input[type=file] {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+    width: 100%;
+    height: 100%;
+  }
+  .drop-icon {
+    width: 48px;
+    height: 48px;
+    margin: 0 auto 1rem;
+    background: var(--bg3);
+    border: 1px solid var(--border2);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+  }
+  .drop-zone h3 {
+    font-size: .95rem;
+    font-weight: 500;
+    color: var(--text);
+    margin-bottom: .4rem;
+  }
+  .drop-zone p {
+    font-size: .8rem;
+    color: var(--muted);
+  }
+  .drop-zone .file-selected {
+    display: none;
+    margin-top: 1rem;
+    font-family: 'DM Mono', monospace;
+    font-size: .8rem;
+    color: var(--success);
+    background: rgba(45,201,138,.08);
+    border: 1px solid rgba(45,201,138,.2);
+    padding: .5rem 1rem;
+    border-radius: 8px;
+  }
+
+  /* Schema pill row */
+  .schema-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .4rem;
+    margin-top: 1.5rem;
+    justify-content: center;
+  }
+  .schema-pills span {
+    font-family: 'DM Mono', monospace;
+    font-size: .7rem;
+    color: var(--muted);
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    padding: .25rem .6rem;
+    border-radius: 6px;
+    letter-spacing: .02em;
+  }
+
+  /* Sample download */
+  .sample-row {
+    margin-top: 1.2rem;
+    text-align: center;
+    font-size: .8rem;
+    color: var(--muted);
+  }
+  .sample-row a {
+    color: var(--accent);
+    text-decoration: none;
+    font-weight: 500;
+  }
+  .sample-row a:hover { text-decoration: underline; }
+
+  /* Action button */
+  .btn-primary {
+    width: 100%;
+    margin-top: 1.5rem;
+    padding: .9rem;
+    background: var(--accent);
+    color: #0e0e0f;
+    border: none;
+    border-radius: var(--radius);
+    font-family: 'DM Sans', sans-serif;
+    font-size: .9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background .2s, transform .1s;
+    letter-spacing: .01em;
+  }
+  .btn-primary:hover { background: var(--accent2); }
+  .btn-primary:active { transform: scale(.98); }
+  .btn-primary:disabled {
+    opacity: .4;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  /* ── Preview state ── */
+  .preview-card {
+    background: var(--bg2);
+    border: 1px solid var(--border2);
+    border-radius: var(--radius-lg);
+    padding: 2rem;
+    margin-bottom: 1.5rem;
+  }
+  .preview-card h2 {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.4rem;
+    color: var(--accent2);
+    margin-bottom: 1.5rem;
+    letter-spacing: -.02em;
+  }
+  .preview-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+  }
+  .preview-stat {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1rem 1.2rem;
+  }
+  .preview-stat-label {
+    font-size: .7rem;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: var(--muted);
+    margin-bottom: .4rem;
+  }
+  .preview-stat-value {
+    font-size: 1.4rem;
+    font-weight: 500;
+    letter-spacing: -.02em;
+    color: var(--text);
+  }
+  .preview-stat-sub {
+    font-size: .75rem;
+    color: var(--muted);
+    margin-top: .2rem;
+    font-family: 'DM Mono', monospace;
+  }
+  .dashboards-preview {
+    display: flex;
+    gap: .75rem;
+    margin-top: 1.5rem;
+  }
+  .dash-pill {
+    flex: 1;
+    padding: .6rem .8rem;
+    border-radius: 10px;
+    font-size: .75rem;
+    font-weight: 500;
+    text-align: center;
+    border: 1px solid;
+  }
+  .dash-pill.exec     { background: rgba(83,74,183,.12); border-color: rgba(127,119,221,.3); color: #afa9ec; }
+  .dash-pill.product  { background: rgba(15,110,86,.12); border-color: rgba(29,158,117,.3); color: #5dcaa5; }
+  .dash-pill.mkt      { background: rgba(153,60,29,.12); border-color: rgba(216,90,48,.3);  color: #f0997b; }
+
+  .btn-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: .75rem;
+  }
+  .btn-secondary {
+    padding: .9rem;
+    background: transparent;
+    color: var(--muted);
+    border: 1px solid var(--border2);
+    border-radius: var(--radius);
+    font-family: 'DM Sans', sans-serif;
+    font-size: .9rem;
+    cursor: pointer;
+    transition: border-color .2s, color .2s;
+  }
+  .btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* ── Loading state ── */
+  .loading-center {
+    text-align: center;
+    padding: 3rem 0;
+  }
+  .loader-ring {
+    width: 56px;
+    height: 56px;
+    margin: 0 auto 2rem;
+    position: relative;
+  }
+  .loader-ring::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    border: 3px solid var(--border2);
+    border-top-color: var(--accent);
+    animation: spin .8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loading-center h2 {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.6rem;
+    color: var(--accent2);
+    letter-spacing: -.02em;
+    margin-bottom: .75rem;
+  }
+  .loading-center p {
+    font-size: .85rem;
+    color: var(--muted);
+    margin-bottom: 2rem;
+  }
+  .steps {
+    display: flex;
+    flex-direction: column;
+    gap: .5rem;
+    max-width: 280px;
+    margin: 0 auto;
+  }
+  .step {
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+    font-size: .8rem;
+    color: var(--muted);
+    padding: .5rem .75rem;
+    border-radius: 8px;
+    transition: color .3s, background .3s;
+  }
+  .step.active {
+    color: var(--text);
+    background: var(--bg3);
+  }
+  .step.done { color: var(--success); }
+  .step-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+    flex-shrink: 0;
+  }
+  .step.active .step-dot { animation: pulse 1s ease-in-out infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+  /* ── Error banner ── */
+  .error-banner {
+    background: rgba(224,80,80,.08);
+    border: 1px solid rgba(224,80,80,.3);
+    border-radius: var(--radius);
+    padding: 1rem 1.25rem;
+    font-size: .85rem;
+    color: #f08080;
+    margin-bottom: 1.5rem;
+    display: none;
+  }
+  .error-banner.show { display: block; }
+
+  /* ── Footer ── */
+  footer {
+    padding: 1.5rem 3rem;
+    border-top: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: .75rem;
+    color: var(--muted);
+  }
+  footer a { color: var(--muted); text-decoration: none; }
+  footer a:hover { color: var(--accent); }
+
+  /* ── Responsive ── */
+  @media (max-width: 600px) {
+    header { padding: 1.25rem 1.5rem; }
+    .header-links .hide-mobile { display: none; }
+    .preview-grid { grid-template-columns: 1fr; }
+    .btn-row { grid-template-columns: 1fr; }
+    footer { padding: 1rem 1.5rem; flex-direction: column; gap: .5rem; }
+  }
+</style>
+</head>
+<body>
+<div class="shell">
+
+  <!-- Header -->
+  <header>
+    <div class="logo">
+      <span class="logo-mark">Dashboard Agent</span>
+      <span class="logo-tag">LangGraph</span>
+    </div>
+    <nav class="header-links">
+      <a href="#" class="hide-mobile">Docs</a>
+      <a href="https://github.com" target="_blank" class="gh-link">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+        GitHub
+      </a>
+    </nav>
+  </header>
+
+  <!-- Main -->
+  <main>
+
+    <!-- ── State 1: Upload ── -->
+    <div class="state active" id="state-upload">
+
+      <div class="headline">
+        <h1>Turn your sales data<br>into <em>instant insights</em></h1>
+        <p>Upload a CSV and get three dashboards — for executives, product teams, and marketing — in seconds.</p>
+      </div>
+
+      <div id="error-upload" class="error-banner"></div>
+
+      <div class="drop-zone" id="drop-zone">
+        <input type="file" id="file-input" accept=".csv" />
+        <div class="drop-icon">📂</div>
+        <h3>Drop your CSV here</h3>
+        <p>or click to browse</p>
+        <div class="file-selected" id="file-selected-label"></div>
+      </div>
+
+      <div class="schema-pills">
+        <span>Transaction ID</span>
+        <span>Date</span>
+        <span>Product Category</span>
+        <span>Product Name</span>
+        <span>Units Sold</span>
+        <span>Unit Price</span>
+        <span>Total Revenue</span>
+        <span>Region</span>
+        <span>Payment Method</span>
+      </div>
+
+      <div class="sample-row">
+        Don't have a file? <a href="/sample" id="sample-link">Download sample CSV</a>
+      </div>
+
+      <button class="btn-primary" id="btn-preview" disabled>
+        Preview & generate →
+      </button>
+
+    </div>
+
+    <!-- ── State 2: Preview ── -->
+    <div class="state" id="state-preview">
+
+      <div id="error-preview" class="error-banner"></div>
+
+      <div class="preview-card">
+        <h2>Looks good.</h2>
+        <div class="preview-grid">
+          <div class="preview-stat">
+            <div class="preview-stat-label">Rows</div>
+            <div class="preview-stat-value" id="prev-rows">—</div>
+            <div class="preview-stat-sub">transactions</div>
+          </div>
+          <div class="preview-stat">
+            <div class="preview-stat-label">Columns</div>
+            <div class="preview-stat-value" id="prev-cols">—</div>
+            <div class="preview-stat-sub">fields detected</div>
+          </div>
+          <div class="preview-stat" style="grid-column:1/-1">
+            <div class="preview-stat-label">Period</div>
+            <div class="preview-stat-value" style="font-size:1rem" id="prev-period">—</div>
+            <div class="preview-stat-sub">date range</div>
+          </div>
+        </div>
+
+        <div class="dashboards-preview">
+          <div class="dash-pill exec">Executive</div>
+          <div class="dash-pill product">Product Team</div>
+          <div class="dash-pill mkt">Marketing</div>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn-secondary" id="btn-back">← Start over</button>
+        <button class="btn-primary" id="btn-generate" style="margin-top:0">
+          Generate dashboards →
+        </button>
+      </div>
+
+    </div>
+
+    <!-- ── State 3: Loading ── -->
+    <div class="state" id="state-loading">
+      <div class="loading-center">
+        <div class="loader-ring"></div>
+        <h2>Building your dashboards…</h2>
+        <p>This takes a few seconds.</p>
+        <div class="steps">
+          <div class="step active" id="step-load">
+            <span class="step-dot"></span> Loading & parsing CSV
+          </div>
+          <div class="step" id="step-metrics">
+            <span class="step-dot"></span> Computing metrics
+          </div>
+          <div class="step" id="step-build">
+            <span class="step-dot"></span> Building charts
+          </div>
+          <div class="step" id="step-done">
+            <span class="step-dot"></span> Assembling dashboard
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Footer -->
+  <footer>
+    <span>Sales Dashboard Agent — open source portfolio project</span>
+    <span>Built with <a href="https://langchain-ai.github.io/langgraph/" target="_blank">LangGraph</a> · <a href="https://fastapi.tiangolo.com" target="_blank">FastAPI</a> · <a href="https://www.chartjs.org" target="_blank">Chart.js</a></span>
+  </footer>
+
+</div>
+
+<script>
+// ── State management ──────────────────────────────────────────────────────────
+
+const states = {
+  upload:   document.getElementById('state-upload'),
+  preview:  document.getElementById('state-preview'),
+  loading:  document.getElementById('state-loading'),
+};
+
+function showState(name) {
+  Object.values(states).forEach(el => el.classList.remove('active'));
+  states[name].classList.add('active');
+}
+
+// ── File selection ────────────────────────────────────────────────────────────
+
+let selectedFile = null;
+
+const dropZone    = document.getElementById('drop-zone');
+const fileInput   = document.getElementById('file-input');
+const btnPreview  = document.getElementById('btn-preview');
+const fileLabel   = document.getElementById('file-selected-label');
+const errorUpload = document.getElementById('error-upload');
+
+function setFile(file) {
+  if (!file) return;
+  if (!file.name.toLowerCase().endsWith('.csv')) {
+    showError(errorUpload, 'Only .csv files are supported.');
+    return;
+  }
+  hideError(errorUpload);
+  selectedFile = file;
+  fileLabel.textContent = `✓ ${file.name} (${(file.size / 1024).toFixed(1)} KB)`;
+  fileLabel.style.display = 'block';
+  btnPreview.disabled = false;
+}
+
+fileInput.addEventListener('change', e => setFile(e.target.files[0]));
+
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+dropZone.addEventListener('drop', e => {
+  e.preventDefault();
+  dropZone.classList.remove('drag-over');
+  setFile(e.dataTransfer.files[0]);
+});
+
+// ── Errors ────────────────────────────────────────────────────────────────────
+
+function showError(el, msg) {
+  el.textContent = msg;
+  el.classList.add('show');
+}
+function hideError(el) {
+  el.classList.remove('show');
+  el.textContent = '';
+}
+
+// ── Preview step ──────────────────────────────────────────────────────────────
+
+document.getElementById('btn-preview').addEventListener('click', async () => {
+  if (!selectedFile) return;
+  hideError(errorUpload);
+
+  btnPreview.disabled = true;
+  btnPreview.textContent = 'Validating…';
+
+  const formData = new FormData();
+  formData.append('file', selectedFile);
+
+  try {
+    const res = await fetch('/preview', { method: 'POST', body: formData });
+    const data = await res.json();
+
+    if (!res.ok || !data.ok) {
+      showError(errorUpload, data.error || 'Validation failed. Check your file.');
+      btnPreview.disabled = false;
+      btnPreview.textContent = 'Preview & generate →';
+      return;
+    }
+
+    // Fill preview
+    document.getElementById('prev-rows').textContent   = data.row_count.toLocaleString();
+    document.getElementById('prev-cols').textContent   = data.col_count;
+    document.getElementById('prev-period').textContent = data.date_min && data.date_max
+      ? `${data.date_min} → ${data.date_max}`
+      : 'N/A';
+
+    showState('preview');
+    btnPreview.disabled = false;
+    btnPreview.textContent = 'Preview & generate →';
+
+  } catch (err) {
+    showError(errorUpload, 'Network error. Is the server running?');
+    btnPreview.disabled = false;
+    btnPreview.textContent = 'Preview & generate →';
+  }
+});
+
+// ── Back button ───────────────────────────────────────────────────────────────
+
+document.getElementById('btn-back').addEventListener('click', () => {
+  showState('upload');
+  hideError(document.getElementById('error-preview'));
+});
+
+// ── Generate step ─────────────────────────────────────────────────────────────
+
+document.getElementById('btn-generate').addEventListener('click', async () => {
+  if (!selectedFile) return;
+  hideError(document.getElementById('error-preview'));
+
+  showState('loading');
+  animateSteps();
+
+  const formData = new FormData();
+  formData.append('file', selectedFile);
+
+  try {
+    const res = await fetch('/generate', { method: 'POST', body: formData });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ detail: 'Unknown error' }));
+      showState('preview');
+      showError(document.getElementById('error-preview'), err.detail || 'Generation failed.');
+      return;
+    }
+
+    const html = await res.text();
+
+    // Open dashboard in new tab
+    const blob = new Blob([html], { type: 'text/html' });
+    const url  = URL.createObjectURL(blob);
+    window.open(url, '_blank');
+
+    // Also offer download
+    const a = document.createElement('a');
+    a.href     = url;
+    a.download = `sales_dashboard_${new Date().toISOString().slice(0,10)}.html`;
+    a.click();
+
+    // Return to upload state for next file
+    setTimeout(() => {
+      showState('upload');
+      selectedFile = null;
+      fileInput.value = '';
+      fileLabel.style.display = 'none';
+      fileLabel.textContent   = '';
+      btnPreview.disabled     = true;
+    }, 800);
+
+  } catch (err) {
+    showState('preview');
+    showError(document.getElementById('error-preview'), 'Network error during generation.');
+  }
+});
+
+// ── Step animation ────────────────────────────────────────────────────────────
+
+function animateSteps() {
+  const steps = [
+    document.getElementById('step-load'),
+    document.getElementById('step-metrics'),
+    document.getElementById('step-build'),
+    document.getElementById('step-done'),
+  ];
+  const delays = [0, 700, 1600, 2600];
+
+  steps.forEach(s => { s.classList.remove('active', 'done'); });
+  steps[0].classList.add('active');
+
+  delays.slice(1).forEach((delay, i) => {
+    setTimeout(() => {
+      steps[i].classList.remove('active');
+      steps[i].classList.add('done');
+      if (steps[i + 1]) steps[i + 1].classList.add('active');
+    }, delay);
+  });
+}
+
+// ── Sample CSV download ───────────────────────────────────────────────────────
+
+document.getElementById('sample-link').addEventListener('click', e => {
+  e.preventDefault();
+  const rows = [
+    ['Transaction ID','Date','Product Category','Product Name','Units Sold','Unit Price','Total Revenue','Region','Payment Method'],
+    ['10001','2024-01-01','Electronics','iPhone 14 Pro','2','999.99','1999.98','North America','Credit Card'],
+    ['10002','2024-01-02','Home Appliances','Dyson V11 Vacuum','1','499.99','499.99','Europe','PayPal'],
+    ['10003','2024-01-03','Clothing','Levi\'s 501 Jeans','3','69.99','209.97','Asia','Debit Card'],
+    ['10004','2024-01-04','Books','The Da Vinci Code','4','15.99','63.96','North America','Credit Card'],
+    ['10005','2024-01-05','Beauty Products','Neutrogena Skincare Set','1','89.99','89.99','Europe','PayPal'],
+    ['10006','2024-01-06','Sports','Wilson Basketball','5','29.99','149.95','Asia','Credit Card'],
+    ['10007','2024-01-07','Electronics','MacBook Pro 16-inch','1','2499.99','2499.99','North America','Credit Card'],
+    ['10008','2024-01-08','Home Appliances','Blueair Classic 480i','2','599.99','1199.98','Europe','PayPal'],
+    ['10009','2024-01-09','Clothing','Nike Air Force 1','6','89.99','539.94','Asia','Debit Card'],
+    ['10010','2024-01-10','Books','Dune by Frank Herbert','2','25.99','51.98','North America','Credit Card'],
+  ];
+  const csv = rows.map(r => r.join(',')).join('\n');
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const a = document.createElement('a');
+  a.href     = URL.createObjectURL(blob);
+  a.download = 'sample_sales.csv';
+  a.click();
+});
+</script>
+</body>
+</html>

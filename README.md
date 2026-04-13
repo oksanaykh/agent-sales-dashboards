@@ -1,25 +1,17 @@
 # 📊 Sales Dashboard Agent
 
-> A LangGraph **sales analytics agent** that reads a CSV, computes product metrics,
-> and generates interactive HTML dashboards for three audiences —
-> all in one command, no server required.
+> A **LangGraph agent** that reads a CSV, computes metrics, and generates interactive
+> HTML dashboards for three audiences — all from a drag-and-drop web UI.
 
 [![python: 3.11+](https://img.shields.io/badge/python-3.11+-blue)](https://python.org)
 [![framework: LangGraph](https://img.shields.io/badge/framework-LangGraph-purple)](https://langchain-ai.github.io/langgraph/)
 [![output: HTML dashboards](https://img.shields.io/badge/output-HTML%20dashboards-green)]()
-[![version: free](https://img.shields.io/badge/version-free-orange)]()
-
----
-
-> **⚠️ Free version.** This is the free version of the Sales Dashboard Agent.
-> It works with datasets that contain a fixed set of columns — see [Required CSV columns](#expected-csv-columns) below.
-> Custom column mapping, additional data sources, and extended metrics are available in the Pro version.
 
 ---
 
 ## What this agent does
 
-Reads any CSV with sales data → computes metrics for three audiences → writes HTML dashboards.
+Upload any CSV with sales data → agent computes metrics → outputs three dashboards in one HTML file.
 
 | Audience | Dashboard focus |
 |---|---|
@@ -32,192 +24,174 @@ Open it in any browser — no server, no dependencies.
 
 ---
 
-## Architecture
-
-```
-START → loader → metrics_computer → dashboard_builder → combiner → END
-```
-
-Each node is a pure function `AgentState → dict`. The graph uses a conditional edge
-after `loader` to short-circuit on file errors without crashing.
-
-```
-agent-sales-dashboard/
-├── agents/
-│   ├── graph.py              # LangGraph StateGraph — nodes + conditional edges
-│   └── state.py              # AgentState TypedDict — single source of truth
-│
-├── tools/
-│   ├── loader.py             # CSV parser, column aliasing, type casting, date range
-│   ├── metrics.py            # Pure metric functions for all 3 audiences
-│   ├── dashboard_builder.py  # Generates 3 individual HTML files
-│   └── combiner.py           # Assembles the combined 3-tab HTML
-│
-├── config/
-│   └── settings.py           # Reads REPORTS_DIR, LOG_LEVEL from env
-│
-├── memory/                   # Reserved for future metric caching
-│
-├── tests/
-│   ├── conftest.py           # Shared fixtures (8-row sample CSV)
-│   ├── test_loader.py        # Unit tests for CSV loader
-│   ├── test_metrics.py       # Unit tests for all metric functions
-│   └── test_graph.py         # End-to-end integration tests (no LLM)
-│
-├── datasets/                 # Put your CSV here
-├── reports/                  # Generated HTML dashboards land here (gitignored)
-├── main.py                   # CLI entry point
-└── pyproject.toml
-```
-
----
-
-## Expected CSV columns
-
-> **Free version requirement:** your CSV must contain the following columns.
-> The agent will warn about missing columns and may produce incomplete dashboards if any are absent.
-> Alternative column names listed below are remapped automatically by `loader.py`.
-
-| Canonical name | Accepted aliases | Type | Description |
-|---|---|---|---|
-| `Order ID` | `Transaction ID` | string | Unique transaction identifier |
-| `Date` | — | date (ISO 8601) | Transaction date |
-| `Category` | `Product Category` | string | Product category |
-| `Product Name` | — | string | Specific product |
-| `Quantity` | `Units Sold` | int | Units sold |
-| `Unit Price` | — | float | Price per unit |
-| `Total Price` | `Total Revenue` | float | `Quantity × Unit Price` |
-| `Region` | — | string | Geographic region |
-| `Payment Method` | — | string | e.g. Credit Card, PayPal |
-
----
-
-## Quickstart
-
-### 1. Clone and install
+## Web UI — quickstart
 
 ```bash
 git clone https://github.com/your-username/agent-sales-dashboard
 cd agent-sales-dashboard
 
-# With conda (recommended)
-conda create -n agent-sales python=3.11 -y
-conda activate agent-sales
+pip install -e ".[web]"
 
-pip install -e ".[anthropic]"
-# or just: pip install langgraph langchain-core
+python server.py
+# → http://localhost:8000
 ```
 
-### 2. Configure (optional)
+Then open `http://localhost:8000`, upload your CSV, and get your dashboards.
 
-```bash
-cp .env.example .env
-# Edit .env — set REPORTS_DIR if you want dashboards somewhere other than reports/
+**Don't have a CSV?** Click "Download sample CSV" in the UI to get a 10-row example.
+
+---
+
+## Architecture
+
+```
+Browser (drag & drop CSV)
+        │
+        ▼ POST /preview  ─── fast validation, shape info
+        │ POST /generate ─── run agent, return HTML
+        │
+   FastAPI server (server.py)
+        │
+        ▼
+   LangGraph Agent
+   START → loader → metrics_computer → dashboard_builder → combiner → END
+        │
+        ▼
+   Combined HTML Dashboard (returned as string, no disk I/O)
+        │
+        ▼
+Browser (renders inline + offers download)
 ```
 
-### 3. Run
+### Two modes
+
+| Mode | Input | Output |
+|---|---|---|
+| **Web** (`python server.py`) | Upload via browser | HTML string returned directly |
+| **CLI** (`python main.py`) | File path | HTML files written to `reports/` |
+
+---
+
+## Expected CSV columns
+
+The agent accepts the following column names. No renaming needed — aliases are auto-remapped.
+
+| Canonical | Accepted aliases | Type |
+|---|---|---|
+| `Transaction ID` | — | string |
+| `Date` | — | date ISO 8601 |
+| `Product Category` | — | string |
+| `Product Name` | — | string |
+| `Units Sold` | — | int |
+| `Unit Price` | — | float |
+| `Total Revenue` | — | float |
+| `Region` | — | string |
+| `Payment Method` | — | string |
+
+---
+
+## CLI usage
 
 ```bash
-# Basic run
+pip install -e ".[anthropic]"   # or just: pip install langgraph langchain-core
+
 python main.py --source datasets/sales.csv
-
-# Open the combined dashboard in your browser immediately
-python main.py --source datasets/sales.csv --open
-
-# Verbose mode (shows LangGraph node execution)
-python main.py --source datasets/sales.csv --verbose
-
-# Save full agent state as JSON (useful for debugging)
-python main.py --source datasets/sales.csv --output-json state.json
-```
-
-### 4. View the results
-
-```
-reports/
-├── dashboard_exec_20240315_143201.html       <- Executive
-├── dashboard_product_20240315_143201.html    <- Product Team
-├── dashboard_marketing_20240315_143201.html  <- Marketing / Growth
-└── dashboard_combined_20240315_143201.html   <- * All three with tab switcher
-```
-
-Open any file in a browser. `dashboard_combined_*.html` is the main deliverable —
-it has three tabs with a colored tab switcher (purple / teal / coral).
-
----
-
-## Example output
-
-```
-================================================================
-  [OK]  Dashboards generated successfully
-================================================================
-
-  Agent log (4 steps):
-    [loader] Loaded 240,000 rows x 9 cols from 'datasets/sales.csv'
-    [metrics] exec: 9 keys | product: 10 keys | marketing: 11 keys
-    [builder] Dashboards written -> reports/
-    [combiner] Combined dashboard -> reports/dashboard_combined_20240315_143201.html
-
-  Output files:
-      Executive     -> reports/dashboard_exec_20240315_143201.html
-      Product Team  -> reports/dashboard_product_20240315_143201.html
-      Marketing     -> reports/dashboard_marketing_20240315_143201.html
-      * Combined    -> reports/dashboard_combined_20240315_143201.html
+python main.py --source datasets/sales.csv --open     # open in browser
+python main.py --source datasets/sales.csv --verbose  # debug logging
 ```
 
 ---
 
-## Dashboards in detail
+## Project structure
 
-### Executive
-- KPI cards: Revenue, Orders, AOV, Units sold
-- Line chart: Revenue by month
-- Bar + Doughnut: Revenue by category
-- Bar: Seasonality index by calendar month
-
-### Product Team
-- KPI cards: Top category, Top product, SKU count, Avg qty/order
-- Horizontal bar: Top-15 products by revenue
-- Horizontal bar: Revenue by region
-- Stacked bar: Category mix by region
-- Heatmap table: Category × calendar month
-
-### Marketing / Growth
-- KPI cards: Top region, Top payment, Region count, Payment count
-- Doughnut: Payment method share (% of orders)
-- Bar: AOV by payment method
-- Multi-line: Revenue by region over time
-- Bar: Orders by day of week
-- Stacked bar: Payment method × category
+```
+agent-sales-dashboard/
+├── server.py                  ← FastAPI web server (GET /, POST /preview, POST /generate)
+├── templates/
+│   └── index.html             ← Upload UI (drag & drop → preview → dashboard)
+├── web/
+│   └── validators.py          ← CSV validation (size, columns, encoding)
+│
+├── agents/
+│   ├── graph.py               ← LangGraph StateGraph — nodes + conditional edges
+│   └── state.py               ← AgentState TypedDict — single source of truth
+│
+├── tools/
+│   ├── loader.py              ← CSV parser — supports file path or bytes (web upload)
+│   ├── metrics.py             ← Pure metric functions for all 3 audiences
+│   ├── dashboard_builder.py   ← Individual HTML files (CLI mode)
+│   └── combiner.py            ← Combined 3-tab HTML — file (CLI) or string (web)
+│
+├── config/
+│   └── settings.py            ← Env config (REPORTS_DIR, LOG_LEVEL)
+│
+├── datasets/
+│   └── sales.csv              ← 240-row sample dataset
+│
+├── tests/
+│   ├── conftest.py
+│   ├── test_validators.py     ← Unit tests for CSV validation
+│   ├── test_web.py            ← FastAPI endpoint tests
+│   ├── test_loader.py         ← CSV loader tests
+│   ├── test_metrics.py        ← Metric function tests
+│   └── test_graph.py          ← End-to-end agent tests
+│
+├── main.py                    ← CLI entry point
+└── pyproject.toml
+```
 
 ---
 
 ## Running tests
 
 ```bash
-pip install -e ".[dev]"
+pip install -e ".[dev,web]"
 
-pytest                          # all tests
-pytest tests/test_metrics.py   # metrics only
-pytest tests/test_graph.py     # end-to-end (no LLM needed)
+pytest                           # all tests
+pytest tests/test_web.py        # endpoint tests only
+pytest tests/test_validators.py # validation tests only
 pytest -v --tb=short            # verbose
-pytest --cov                    # with coverage
 ```
 
 ---
 
-## Extending the agent
+## API endpoints
 
-| Idea | Where |
+| Method | Path | Description |
+|---|---|---|
+| `GET` | `/` | Upload UI |
+| `POST` | `/preview` | Validate CSV, return `{ok, row_count, col_count, date_min, date_max}` |
+| `POST` | `/generate` | Run agent, return combined HTML dashboard |
+
+### `/preview` response
+
+```json
+{
+  "ok": true,
+  "row_count": 240,
+  "col_count": 9,
+  "date_min": "2024-01-01",
+  "date_max": "2024-08-27",
+  "columns": ["Transaction ID", "Date", ...]
+}
+```
+
+### Error response
+
+```json
+{ "ok": false, "error": "Missing required columns: Product Category, Units Sold" }
+```
+
+---
+
+## Limits
+
+| Constraint | Value |
 |---|---|
-| LLM-generated text summaries per dashboard | New node in `agents/graph.py` + `tools/summarizer.py` |
-| Metric caching (skip recompute if file unchanged) | `memory/metric_cache.py` |
-| PDF export of dashboards | New tool using `playwright` or `weasyprint` |
-| Slack/email delivery of the combined HTML | New node `tools/notifier.py` |
-| Filters by date range / region via CLI | `main.py` args + pass to `loader_node` |
-| Multi-file comparison (month vs month) | New conditional branch in `graph.py` |
-| Scheduled runs (cron / Airflow) | `main.py` returns exit code 0/1 for scripting |
+| Max file size | 10 MB |
+| Max rows | 100,000 |
+| File type | `.csv` only |
+| Encoding | UTF-8 or Latin-1 (auto-detected) |
 
 ---
 

@@ -11,8 +11,6 @@ from collections import defaultdict
 from datetime import datetime
 
 
-# ── Helpers ───────────────────────────────────────────────────────────────────
-
 def _safe_float(v) -> float:
     try:
         return float(v)
@@ -21,7 +19,6 @@ def _safe_float(v) -> float:
 
 
 def _month_key(date_str: str) -> str:
-    """'2023-04-15' → '2023-04'"""
     try:
         d = datetime.fromisoformat(str(date_str))
         return d.strftime("%Y-%m")
@@ -30,23 +27,13 @@ def _month_key(date_str: str) -> str:
 
 
 def _weekday(date_str: str) -> int:
-    """Return weekday index 0=Mon … 6=Sun, or -1 on error."""
     try:
         return datetime.fromisoformat(str(date_str)).weekday()
     except Exception:
         return -1
 
 
-# ── Executive metrics ─────────────────────────────────────────────────────────
-
 def compute_exec_metrics(rows: list[dict]) -> dict:
-    """
-    KPIs for top-management:
-      total_revenue, total_orders, aov, total_units,
-      revenue_by_month (sorted), revenue_by_category,
-      seasonality_index (by calendar month 0-11),
-      mom_growth (month-over-month % change list)
-    """
     total_revenue = sum(_safe_float(r.get("Total Price")) for r in rows)
     total_orders  = len(rows)
     total_units   = sum(int(r.get("Quantity") or 0) for r in rows)
@@ -65,12 +52,11 @@ def compute_exec_metrics(rows: list[dict]) -> dict:
         rev_by_cat[cat] += _safe_float(r.get("Total Price"))
     rev_by_cat = dict(sorted(rev_by_cat.items(), key=lambda x: -x[1]))
 
-    # Seasonality index: average revenue per calendar month / global monthly avg
     month_totals: dict[int, float] = defaultdict(float)
     month_counts: dict[int, int]   = defaultdict(int)
     for m_key, val in rev_by_month.items():
         try:
-            m_num = int(m_key.split("-")[1]) - 1  # 0-indexed
+            m_num = int(m_key.split("-")[1]) - 1
             month_totals[m_num] += val
             month_counts[m_num] += 1
         except Exception:
@@ -82,7 +68,6 @@ def compute_exec_metrics(rows: list[dict]) -> dict:
     global_avg = sum(month_avgs) / 12 if any(month_avgs) else 1.0
     seasonality_index = [round(v / global_avg, 3) if global_avg else 0.0 for v in month_avgs]
 
-    # MoM growth %
     vals = [rev_by_month_sorted[m] for m in months_sorted]
     mom_growth = [None]
     for i in range(1, len(vals)):
@@ -104,24 +89,11 @@ def compute_exec_metrics(rows: list[dict]) -> dict:
     }
 
 
-# ── Product metrics ───────────────────────────────────────────────────────────
-
 def compute_product_metrics(rows: list[dict]) -> dict:
-    """
-    Metrics for product team:
-      top_products (top-15 by revenue),
-      revenue_by_category, revenue_by_region,
-      cat_by_region (stacked),
-      cat_by_month (heatmap, 12 values per category),
-      sku_count, avg_qty_per_order
-    """
     rev_by_prod: dict[str, float] = defaultdict(float)
     rev_by_cat:  dict[str, float] = defaultdict(float)
     rev_by_reg:  dict[str, float] = defaultdict(float)
-
-    # category × region
     cat_by_reg: dict[str, dict[str, float]] = defaultdict(lambda: defaultdict(float))
-    # category × month (0-11)
     cat_by_month: dict[str, list[float]] = defaultdict(lambda: [0.0] * 12)
 
     total_qty = 0
@@ -163,26 +135,13 @@ def compute_product_metrics(rows: list[dict]) -> dict:
     }
 
 
-# ── Marketing / Growth metrics ────────────────────────────────────────────────
-
 def compute_marketing_metrics(rows: list[dict]) -> dict:
-    """
-    Metrics for marketing/growth:
-      orders_by_payment, rev_by_payment, aov_by_payment,
-      revenue_by_region, rev_reg_by_month (multi-line),
-      orders_by_weekday (0=Mon),
-      pay_by_category (stacked)
-    """
     orders_by_pay: dict[str, int]   = defaultdict(int)
     rev_by_pay:    dict[str, float] = defaultdict(float)
     rev_by_reg:    dict[str, float] = defaultdict(float)
-
-    # region × month
     rev_reg_month: dict[str, dict[str, float]] = defaultdict(lambda: defaultdict(float))
-    # payment × category
     pay_by_cat: dict[str, dict[str, int]] = defaultdict(lambda: defaultdict(int))
-
-    orders_by_weekday = [0] * 7  # Mon=0 … Sun=6
+    orders_by_weekday = [0] * 7
 
     for r in rows:
         pay = r.get("Payment Method") or "Unknown"
