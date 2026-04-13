@@ -7,6 +7,13 @@
 [![python: 3.11+](https://img.shields.io/badge/python-3.11+-blue)](https://python.org)
 [![framework: LangGraph](https://img.shields.io/badge/framework-LangGraph-purple)](https://langchain-ai.github.io/langgraph/)
 [![output: HTML dashboards](https://img.shields.io/badge/output-HTML%20dashboards-green)]()
+[![version: free](https://img.shields.io/badge/version-free-orange)]()
+
+---
+
+> **⚠️ Free version.** This is the free version of the Sales Dashboard Agent.
+> It works with datasets that contain a fixed set of columns — see [Required CSV columns](#expected-csv-columns) below.
+> Custom column mapping, additional data sources, and extended metrics are available in the Pro version.
 
 ---
 
@@ -67,8 +74,9 @@ agent-sales-dashboard/
 
 ## Expected CSV columns
 
-The agent accepts the following column names. Alternative names are automatically
-remapped by `loader.py` — no manual renaming needed.
+> **Free version requirement:** your CSV must contain the following columns.
+> The agent will warn about missing columns and may produce incomplete dashboards if any are absent.
+> Alternative column names listed below are remapped automatically by `loader.py`.
 
 | Canonical name | Accepted aliases | Type | Description |
 |---|---|---|---|
