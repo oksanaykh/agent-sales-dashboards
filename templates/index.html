@@ -12,20 +12,20 @@
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
   :root {
-    --bg:        #0e0e0f;
-    --bg2:       #161618;
-    --bg3:       #1e1e21;
-    --border:    rgba(255,255,255,0.07);
-    --border2:   rgba(255,255,255,0.12);
-    --text:      #f0ede8;
-    --muted:     #7a7875;
-    --accent:    #c8b89a;
-    --accent2:   #e8ddd0;
-    --purple:    #7f77dd;
-    --teal:      #1d9e75;
-    --coral:     #d85a30;
-    --success:   #2dc98a;
-    --error:     #e05050;
+    --bg:        #f5f4f1;
+    --bg2:       #ffffff;
+    --bg3:       #eeece8;
+    --border:    rgba(0,0,0,0.08);
+    --border2:   rgba(0,0,0,0.14);
+    --text:      #1a1a18;
+    --muted:     #8a8780;
+    --accent:    #534AB7;
+    --accent2:   #3C3489;
+    --purple:    #534AB7;
+    --teal:      #0F6E56;
+    --coral:     #993C1D;
+    --success:   #0F6E56;
+    --error:     #c0392b;
     --radius:    12px;
     --radius-lg: 20px;
   }
@@ -61,7 +61,7 @@
   .logo-mark {
     font-family: 'DM Serif Display', serif;
     font-size: 1.4rem;
-    color: var(--accent);
+    color: var(--text);
     letter-spacing: -.02em;
   }
   .logo-tag {
@@ -74,6 +74,7 @@
     border: 1px solid var(--border2);
     padding: 2px 7px;
     border-radius: 20px;
+    color: var(--muted);
   }
   .header-links {
     display: flex;
@@ -98,7 +99,7 @@
     color: var(--text) !important;
     font-size: .8rem !important;
   }
-  .gh-link:hover { border-color: var(--accent) !important; color: var(--accent) !important; }
+  .gh-link:hover { border-color: var(--accent) !important; color: var(--accent) !important; background: rgba(83,74,183,0.04) !important; }
 
   /* ── Main ── */
   main {
@@ -150,7 +151,7 @@
   }
   .drop-zone:hover, .drop-zone.drag-over {
     border-color: var(--accent);
-    background: rgba(200,184,154,.04);
+    background: rgba(83,74,183,0.04);
   }
   .drop-zone input[type=file] {
     position: absolute;
@@ -188,8 +189,8 @@
     font-family: 'DM Mono', monospace;
     font-size: .8rem;
     color: var(--success);
-    background: rgba(45,201,138,.08);
-    border: 1px solid rgba(45,201,138,.2);
+    background: rgba(15,110,86,.08);
+    border: 1px solid rgba(15,110,86,.2);
     padding: .5rem 1rem;
     border-radius: 8px;
   }
@@ -233,7 +234,7 @@
     margin-top: 1.5rem;
     padding: .9rem;
     background: var(--accent);
-    color: #0e0e0f;
+    color: #ffffff;
     border: none;
     border-radius: var(--radius);
     font-family: 'DM Sans', sans-serif;
@@ -243,7 +244,7 @@
     transition: background .2s, transform .1s;
     letter-spacing: .01em;
   }
-  .btn-primary:hover { background: var(--accent2); }
+  .btn-primary:hover { background: var(--accent2); color: #ffffff; }
   .btn-primary:active { transform: scale(.98); }
   .btn-primary:disabled {
     opacity: .4;
@@ -310,9 +311,9 @@
     text-align: center;
     border: 1px solid;
   }
-  .dash-pill.exec     { background: rgba(83,74,183,.12); border-color: rgba(127,119,221,.3); color: #afa9ec; }
-  .dash-pill.product  { background: rgba(15,110,86,.12); border-color: rgba(29,158,117,.3); color: #5dcaa5; }
-  .dash-pill.mkt      { background: rgba(153,60,29,.12); border-color: rgba(216,90,48,.3);  color: #f0997b; }
+  .dash-pill.exec     { background: rgba(83,74,183,.10); border-color: rgba(83,74,183,.3);   color: #3C3489; }
+  .dash-pill.product  { background: rgba(15,110,86,.10); border-color: rgba(15,110,86,.3);  color: #085041; }
+  .dash-pill.mkt      { background: rgba(153,60,29,.10); border-color: rgba(153,60,29,.3);  color: #712B13; }
 
   .btn-row {
     display: grid;
@@ -386,7 +387,7 @@
     color: var(--text);
     background: var(--bg3);
   }
-  .step.done { color: var(--success); }
+  .step.done { color: var(--success); font-weight: 500; }
   .step-dot {
     width: 6px;
     height: 6px;
@@ -399,12 +400,12 @@
 
   /* ── Error banner ── */
   .error-banner {
-    background: rgba(224,80,80,.08);
-    border: 1px solid rgba(224,80,80,.3);
+    background: rgba(192,57,43,.07);
+    border: 1px solid rgba(192,57,43,.25);
     border-radius: var(--radius);
     padding: 1rem 1.25rem;
     font-size: .85rem;
-    color: #f08080;
+    color: #c0392b;
     margin-bottom: 1.5rem;
     display: none;
   }
@@ -443,7 +444,6 @@
       <span class="logo-tag">LangGraph</span>
     </div>
     <nav class="header-links">
-      <a href="#" class="hide-mobile">Docs</a>
       <a href="https://github.com" target="_blank" class="gh-link">
         <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
         GitHub
